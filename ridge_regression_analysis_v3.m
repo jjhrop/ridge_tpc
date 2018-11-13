@@ -55,6 +55,8 @@ function [Y_hat_k_opt, B_k_opt, k_opt_universal, k_opt_list_sample, sample_indic
     % k_opt_only = 0;
     % num_cores = 1;
     
+    tic
+    
     V = spm_vol(image_file_path);
     img = spm_read_vols(V);
     size_original = size(img);
@@ -248,5 +250,7 @@ function [Y_hat_k_opt, B_k_opt, k_opt_universal, k_opt_list_sample, sample_indic
         B_k_opt = {[]};
     
     end
+    
+    toc
 
 end
