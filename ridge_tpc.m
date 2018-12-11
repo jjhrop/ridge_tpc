@@ -1,4 +1,4 @@
-function [b_k, b_k_opt, k_opt, sigma_b] = ridge_tpc(y, X, k, training_sets, num_cores, b_k_opt_only, calculate_sigma)
+function [b_lambda, b_lambda_opt, lambda_opt, sigma_b] = ridge_tpc(y, X, lambda, K, num_cores, b_lambda_opt_only, calculate_sigma)
 
     % A function for estimating ridge regression coefficients.
     %
@@ -8,17 +8,18 @@ function [b_k, b_k_opt, k_opt, sigma_b] = ridge_tpc(y, X, k, training_sets, num_
     %
     % X: n-by-p matrix of p predictors at n observations.
     %
-    % k: a vector of parameters for ridge regression. If k consists of m 
-    % elements, the calculated b_k is p-by-m in size.
+    % lambda: a vector of parameters for ridge regression. If lambda consists of m 
+    % elements, the calculated b_lambda is p-by-m in size.
     %
     % Optional inputs:
     %
-    % training_sets: the proportions of the splitting points for the
-    % training sets, with the beginning and endpoint for each set in turn, 
-    % e.g. [0, 0.5, 0.5, 1].
+    % K: The number of training sets used in cross-validation. Each set 
+    % is treated as the validation set in turn. The data is split evenly 
+    % into the sets by its timepoints. E.g. with K = 2 the two 
+    % training sets are the first half and the second half.
     %
-    % b_k_opt_only: whether the analysis should only be carried out to 
-    % determine b with the optimal value of k rather than with all its 
+    % b_lambda_opt_only: whether the analysis should only be carried out to 
+    % determine b with the optimal value of lambda rather than with all its 
     % values. Possible values: 0 and 1. By default, the analysis is 
     % carried out in its entirety.
     %
@@ -31,29 +32,29 @@ function [b_k, b_k_opt, k_opt, sigma_b] = ridge_tpc(y, X, k, training_sets, num_
     %
     % Outputs:
     %
-    % b_k: ridge regression coefficients with various values of parameter
-    % k.
+    % b_lambda: ridge regression coefficients with various values of parameter
+    % lambda.
     %
     % sigma_b: the covariance matrix of b.
     %
-    % k_opt: the optimal value of k.
+    % lambda_opt: the optimal value of lambda.
     %
-    % b_k_opt: the values of b_k that correspond to the optimal value of k.
+    % b_lambda_opt: the values of b_lambda that correspond to the optimal value of lambda.
     %
-    % version 3.0, 2018-12-04; Jonatan Ropponen, Tomi Karjalainen
+    % version 3.1, 2018-12-11; Jonatan Ropponen, Tomi Karjalainen
     
     % Default values
     
     if nargin < 3
-        k = [0 1 10 100 1000 10^4 10^5 10^6];
+        lambda = [0 1 10 100 1000 10^4 10^5 10^6];
     end
     
     if nargin < 4
-        training_sets = [0, 0.5, 0.5, 1];
+        K = 2;
     end
     
     if nargin < 5
-        b_k_opt_only = 0;
+        b_lambda_opt_only = 0;
     end
     
     % By default, parallel computing is not used.
@@ -74,41 +75,41 @@ function [b_k, b_k_opt, k_opt, sigma_b] = ridge_tpc(y, X, k, training_sets, num_
 
     % Estimating the ridge coefficients.
     p = size(X, 2);
-    nk = length(k);
-    b_k = zeros(p, nk);
+    n_lambda = length(lambda);
+    b_lambda = zeros(p, n_lambda);
     [U, S, V] = svd(Z, 'econ');
     d = diag(S);
     A = U' * y_centered;
     
-    if b_k_opt_only == 0
+    if b_lambda_opt_only == 0
       
-        for i = 1:nk
-            di = d./(d.^2 + k(i));
-            b_k(:, i) = V * diag(di) * A;
+        for i = 1:n_lambda
+            di = d./(d.^2 + lambda(i));
+            b_lambda(:, i) = V * diag(di) * A;
         end 
     else 
-        b_k = [];
+        b_lambda = [];
     end
     
-    % If only a single value of k has been provided, we can skip this 
+    % If only a single value of lambda has been provided, we can skip this 
     % section.
     
-    if nk == 1
-        k_opt = k(1);
+    if n_lambda == 1
+        lambda_opt = lambda(1);
     else
-        % Choosing the optimal k by cross-validation.
-        k_opt = ridge_cross_validation(y, X, k, training_sets, num_cores);
+        % Choosing the optimal lambda by cross-validation.
+        lambda_opt = ridge_cross_validation(y, X, lambda, K, num_cores);
     end
     
-    % The ridge coefficients with the optimal value of k
+    % The ridge coefficients with the optimal value of lambda
     
-    k_index = find(k == k_opt);
+    lambda_index = find(lambda == lambda_opt);
     
-    if b_k_opt_only == 0
-        b_k_opt = b_k(:, k_index);
+    if b_lambda_opt_only == 0
+        b_lambda_opt = b_lambda(:, lambda_index);
     else
-        d_opt = d./(d.^2 + k(k_index));
-        b_k_opt = V * diag(d_opt) * A;    
+        d_opt = d./(d.^2 + lambda(lambda_index));
+        b_lambda_opt = V * diag(d_opt) * A;    
     end
     
     p = size(X, 2);
@@ -118,10 +119,10 @@ function [b_k, b_k_opt, k_opt, sigma_b] = ridge_tpc(y, X, k, training_sets, num_
         % Calculating the degrees of freedom.
         % (Not currently used; perhaps could be implemented in the 
         % estimation of sigma.)        
-        %df = sum((d.^2) / (d.^2 + k_opt));
+        %df = sum((d.^2) / (d.^2 + lambda_opt));
 
         % Calculating the residuals.
-        H = Z' * Z + k_opt * eye(p);
+        H = Z' * Z + lambda_opt * eye(p);
         yhat = Z * (H \ (Z' * y));
         res = y - yhat;
 

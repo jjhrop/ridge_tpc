@@ -1,7 +1,7 @@
-function [k_opt, cv_error_k] = ridge_cross_validation(y, X, k, training_sets, num_cores)
+function [lambda_opt, cv_error_lambda] = ridge_cross_validation(y, X, lambda, K, num_cores)
     
     % Performing cross-validation on ridge regression data to determine the
-    % optimal value of parameter k for a single voxel. The function 
+    % optimal value of parameter lambda for a single voxel. The function 
     % applies K-fold cross-validation, i.e. cross-validation with K
     % subsets of elements, removing each subset in turn. Each time, we 
     % choose one subset as the validation set and the others as the 
@@ -15,34 +15,34 @@ function [k_opt, cv_error_k] = ridge_cross_validation(y, X, k, training_sets, nu
     %
     % Optional inputs:
     %
-    % k: A vector of parameters for ridge regression, e.g. 
-    % [0 1 10 100 1000 10^4 10^5 10^6]. If k consists of m elements, 
-    % the calculated b_k is p-by-m in size.
+    % lambda: A vector of parameters for ridge regression, e.g. 
+    % [0 1 10 100 1000 10^4 10^5 10^6]. If lambda consists of m elements, 
+    % the calculated b_lambda is p-by-m in size.
     %
-    % training_sets: the proportions of the splitting points for the
-    % training sets, with the beginning and endpoint for each set in turn, 
-    % e.g. [0, 0.5, 0.5, 1]. It is preferable for measuring error if the
-    % sets are roughly equal in size. Furthermore, overlaps are removed.
+    % K: The number of training sets used in cross-validation. Each set 
+    % is treated as the validation set in turn. The data is split evenly 
+    % into the sets by its timepoints. E.g. with K = 2 the two 
+    % training sets are the first half and the second half.
     %
     % num_cores: The number of cores to be used for parallel processing.
     % Default: 1 (non-parallel).
     %
     % Outputs:
     %
-    % k_opt: the optimal value of k.
+    % lambda_opt: the optimal value of lambda.
     %
-    % cv_error_k: the error terms calculated by cross-validation with
-    % various values of k.
+    % cv_error_lambda: the error terms calculated by cross-validation with
+    % various values of lambda.
     %
-    % version 1.0, 2018-12-04; Jonatan Ropponen, Tomi Karjalainen
+    % version 2.0, 2018-12-11; Jonatan Ropponen, Tomi Karjalainen
     
     % Default values
     if nargin < 3
-        k = [0 1 10 100 1000 10^4 10^5 10^6];
+        lambda = [0 1 10 100 1000 10^4 10^5 10^6];
     end
     
     if nargin < 4
-        training_sets = [0, 0.5, 0.5, 1];
+        K = 2;
     end
     
     % By default, parallel computing is not used.
@@ -50,15 +50,15 @@ function [k_opt, cv_error_k] = ridge_cross_validation(y, X, k, training_sets, nu
         num_cores = 1;
     end
     
-    nk = length(k);
+    n_lambda = length(lambda);
     
-    % If only a single value of k has been provided, we can simply return
+    % If only a single value of lambda has been provided, we can simply return
     % it.
     
-    if nk == 1
+    if n_lambda == 1
     
-        k_opt = k(1);
-        cv_error_k = [];
+        lambda_opt = lambda(1);
+        cv_error_lambda = [];
         
     else
 
@@ -66,47 +66,22 @@ function [k_opt, cv_error_k] = ridge_cross_validation(y, X, k, training_sets, nu
         
         % Determining the training sets.
         
+        subset_size = number_of_indices / K;
+        
         training_set_indices = {};
         
-        number_of_training_sets = floor(length(training_sets) / 2);
+        for i = 1:K
         
-        for i = 1:number_of_training_sets
-        
-            first_splitting_point = training_sets(2 * i - 1);
-            
-            if first_splitting_point < 0
-                first_splitting_point = 0;
-            elseif first_splitting_point > 1
-                first_splitting_point = 1;
-            end
-            
-            last_splitting_point = training_sets(2 * i);
-            
-            if last_splitting_point < 0
-                last_splitting_point = 0;
-            elseif last_splitting_point > 1
-                last_splitting_point = 1;
-            elseif last_splitting_point < first_splitting_point
-                last_splitting_point = first_splitting_point;
-            end
-            
-            first_index = ceil(number_of_indices * first_splitting_point);
-            
-            if first_index < 1
-                first_index = 1;
-            end
-            
-            last_index = floor(number_of_indices * last_splitting_point);
+            first_index = round((i-1) * subset_size) + 1;
+            last_index = min(round(i * subset_size), number_of_indices);
             
             new_training_set = first_index : last_index;
-            
-            % Removing overlapping indices.
-            new_training_set = setdiff(new_training_set, cell2mat(training_set_indices));
-            
+        
             training_set_indices = [training_set_indices, {new_training_set}];
         end
+
         
-        % Choosing the optimal k by cross-validation
+        % Choosing the optimal lambda by cross-validation
 
         % Applying K-fold cross-validation, i.e. cross-validation with K
         % subsets of elements, removing each subset in turn. We choose one
@@ -116,7 +91,7 @@ function [k_opt, cv_error_k] = ridge_cross_validation(y, X, k, training_sets, nu
             
             [~, par_workers] = create_parpool(num_cores);
         
-            parfor i = 1:number_of_training_sets
+            parfor i = 1:K
 
                 current_indices = cell2mat(training_set_indices(i));
 
@@ -150,25 +125,25 @@ function [k_opt, cv_error_k] = ridge_cross_validation(y, X, k, training_sets, nu
 
                 % Estimating the ridge coefficients
                 p_neg_i = size(X_neg_i, 2);     
-                b_k_neg_i = zeros(p_neg_i, nk);
+                b_lambda_neg_i = zeros(p_neg_i, n_lambda);
                 [U_neg_i, S_neg_i, V_neg_i] = svd(Z_neg_i, 'econ');
                 d_neg_i = diag(S_neg_i);
                 A_neg_i = U_neg_i' * y_neg_i_centered;
 
-                f_k_neg_i = zeros(excluded_set_size, 1);
+                f_lambda_neg_i = zeros(excluded_set_size, 1);
 
-                for j = 1:nk
+                for j = 1:n_lambda
 
-                    di_neg_i = d_neg_i ./ (d_neg_i.^2 + k(j));
-                    b_k_neg_i(:, j) = V_neg_i * diag(di_neg_i) * A_neg_i;
+                    di_neg_i = d_neg_i ./ (d_neg_i.^2 + lambda(j));
+                    b_lambda_neg_i(:, j) = V_neg_i * diag(di_neg_i) * A_neg_i;
 
                     % Calculating the cross-validation error.
                     % Note that the values of b are applied on the excluded
                     % subset, i.e. the training set chosen as the validation
                     % set.
 
-                    f_k_neg_i(:, j) = Z_i * b_k_neg_i(:, j);
-                    cv_error_k_i(i, j) = (excluded_set_size)^(-1) * sum((y_i_centered - f_k_neg_i(:, j)).^2);
+                    f_lambda_neg_i(:, j) = Z_i * b_lambda_neg_i(:, j);
+                    cv_error_lambda_i(i, j) = (excluded_set_size)^(-1) * sum((y_i_centered - f_lambda_neg_i(:, j)).^2);
 
                 end
             end
@@ -179,7 +154,7 @@ function [k_opt, cv_error_k] = ridge_cross_validation(y, X, k, training_sets, nu
         
         else
             
-            for i = 1:number_of_training_sets
+            for i = 1:K
 
                 current_indices = cell2mat(training_set_indices(i));
 
@@ -213,38 +188,38 @@ function [k_opt, cv_error_k] = ridge_cross_validation(y, X, k, training_sets, nu
 
                 % Estimating the ridge coefficients
                 p_neg_i = size(X_neg_i, 2);     
-                b_k_neg_i = zeros(p_neg_i, nk);
+                b_lambda_neg_i = zeros(p_neg_i, n_lambda);
                 [U_neg_i, S_neg_i, V_neg_i] = svd(Z_neg_i, 'econ');
                 d_neg_i = diag(S_neg_i);
                 A_neg_i = U_neg_i' * y_neg_i_centered;
 
-                f_k_neg_i = zeros(excluded_set_size, 1);
+                f_lambda_neg_i = zeros(excluded_set_size, 1);
 
-                for j = 1:nk
+                for j = 1:n_lambda
 
-                    di_neg_i = d_neg_i ./ (d_neg_i.^2 + k(j));
-                    b_k_neg_i(:, j) = V_neg_i * diag(di_neg_i) * A_neg_i;
+                    di_neg_i = d_neg_i ./ (d_neg_i.^2 + lambda(j));
+                    b_lambda_neg_i(:, j) = V_neg_i * diag(di_neg_i) * A_neg_i;
 
                     % Calculating the cross-validation error.
                     % Note that the values of b are applied on the excluded
                     % subset, i.e. the training set chosen as the validation
                     % set.
 
-                    f_k_neg_i(:, j) = Z_i * b_k_neg_i(:, j);
-                    cv_error_k_i(i, j) = (excluded_set_size)^(-1) * sum((y_i_centered - f_k_neg_i(:, j)).^2);
+                    f_lambda_neg_i(:, j) = Z_i * b_lambda_neg_i(:, j);
+                    cv_error_lambda_i(i, j) = (excluded_set_size)^(-1) * sum((y_i_centered - f_lambda_neg_i(:, j)).^2);
 
                 end
             end
         end
         
-        % The error overall for each value of k
+        % The error overall for each value of lambda
         
-        for i = 1:nk
-            cv_error_k(i) = number_of_training_sets^(-1) * sum(cv_error_k_i(:, i));
+        for i = 1:n_lambda
+            cv_error_lambda(i) = K^(-1) * sum(cv_error_lambda_i(:, i));
         end
         
-        [~, opt_idx] = min(cv_error_k);
-        k_opt = k(opt_idx(1));
+        [~, opt_idx] = min(cv_error_lambda);
+        lambda_opt = lambda(opt_idx(1));
     
     end
 end

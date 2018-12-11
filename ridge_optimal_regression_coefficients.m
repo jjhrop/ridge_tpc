@@ -1,7 +1,7 @@
-function B_k_opt = ridge_optimal_regression_coefficients(Y, regressor_matrix, k_opt_universal, num_cores)
+function B_lambda_opt = ridge_optimal_regression_coefficients(Y, regressor_matrix, lambda_opt_universal, num_cores)
 
     % Determining the regression coefficients for all voxels in the image 
-    % with the universal value of parameter k. 
+    % with the universal value of parameter lambda. 
     %
     % Inputs:
     %
@@ -9,7 +9,7 @@ function B_k_opt = ridge_optimal_regression_coefficients(Y, regressor_matrix, k_
     %
     % regressor_matrix: a matrix containing regressors.
     %
-    % k_opt_universal: the universal optimal value of k, to be applied to 
+    % lambda_opt_universal: the universal optimal value of lambda, to be applied to 
     % all voxels.
     %
     % Optional input:
@@ -19,9 +19,9 @@ function B_k_opt = ridge_optimal_regression_coefficients(Y, regressor_matrix, k_
     %
     % Outputs:
     %
-    % B_k_opt: the regression coefficients with the optimal value of k.
+    % B_lambda_opt: the regression coefficients with the optimal value of lambda.
     
-    % version 1.0, 2018-12-04, Jonatan Ropponen
+    % version 1.1, 2018-12-11, Jonatan Ropponen
 
     
     % By default, parallel computing is not used.
@@ -33,7 +33,7 @@ function B_k_opt = ridge_optimal_regression_coefficients(Y, regressor_matrix, k_
     
     nx = size(regressor_matrix, 2);
     dimensions = [M, nx, 1];
-    B_k_opt = zeros(dimensions);
+    B_lambda_opt = zeros(dimensions);
 
     if num_cores > 1
 
@@ -42,15 +42,15 @@ function B_k_opt = ridge_optimal_regression_coefficients(Y, regressor_matrix, k_
             y = Y(:, i);
 
             % Using Matlab's default ridge function
-            b = ridge(y, regressor_matrix, k_opt_universal);
+            b = ridge(y, regressor_matrix, lambda_opt_universal);
 
             % Alternative: with ridge_tpc
             % training_sets = [0, 0.5, 0.5, 1];
-            % b_k_opt_only = 1;
+            % b_lambda_opt_only = 1;
             % calculate_sigma = 0;
-            % [~, b_k_opt] = ridge_tpc(y, X, k, training_sets, b_k_opt_only, calculate_sigma);
+            % [~, b_lambda_opt] = ridge_tpc(y, X, lambda, training_sets, b_lambda_opt_only, calculate_sigma);
 
-            B_k_opt(i, :, :) = b;
+            B_lambda_opt(i, :, :) = b;
         end
 
     else
@@ -60,15 +60,15 @@ function B_k_opt = ridge_optimal_regression_coefficients(Y, regressor_matrix, k_
             y = Y(:, i);
 
             % Using Matlab's default ridge function
-            b = ridge(y, regressor_matrix, k_opt_universal);
+            b = ridge(y, regressor_matrix, lambda_opt_universal);
 
             % Alternative: with ridge_tpc
             % training_sets = [0, 0.5, 0.5, 1];
-            % b_k_opt_only = 1;
+            % b_lambda_opt_only = 1;
             % calculate_sigma = 0;
-            % [~, b_k_opt] = ridge_tpc(y, X, k, training_sets, b_k_opt_only, calculate_sigma);
+            % [~, b_lambda_opt] = ridge_tpc(y, X, lambda, training_sets, b_lambda_opt_only, calculate_sigma);
 
-            B_k_opt(i, :, :) = b;
+            B_lambda_opt(i, :, :) = b;
         end 
     end
 
