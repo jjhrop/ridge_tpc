@@ -16,6 +16,7 @@ Includes functions (on 18 December 2018):
 ridge_image.m
 ridge_tpc.m
 ridge_cross_validation.m
+ridge_cv_error_calculation.m
 ridge_optimal_universal_parameter.m
 ridge_optimal_regression_coefficients.m
 
