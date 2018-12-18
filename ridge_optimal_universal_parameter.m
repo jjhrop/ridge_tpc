@@ -37,7 +37,7 @@ function [lambda_opt_universal, lambda_opt_list_sample, sample_indices] = ridge_
     %
     % sample_indices: the indices of the voxels chosen for the sample.
     
-    % version 1.1, 2018-12-11, Jonatan Ropponen
+    % version 1.2, 2018-12-18, Jonatan Ropponen
     
     
     % Default entries for optional inputs:
@@ -86,15 +86,25 @@ function [lambda_opt_universal, lambda_opt_list_sample, sample_indices] = ridge_
         
         calculate_sigma = 0;
         b_lambda_opt_only = 1;
+        
+        % The parallelization is carried out at this level, so it cannot be
+        % applied within ridge_tpc.m.
+        num_cores_ridge = 1;
 
         if num_cores > 1
+            
+            [~, par_workers] = create_parpool(num_cores);
         
             parfor i = 1:sample_size
 
                 y = Y_sample(:, i);
 
-                [~, ~, lambda_opt] = ridge_tpc(y, regressor_matrix, lambda_values, K, num_cores, b_lambda_opt_only, calculate_sigma);
+                [~, ~, lambda_opt] = ridge_tpc(y, regressor_matrix, lambda_values, K, num_cores_ridge, b_lambda_opt_only, calculate_sigma);
                 lambda_opt_list_sample(i) = lambda_opt;
+            end
+            
+            if ~isempty(par_workers)
+                delete(par_workers);
             end
             
         else
@@ -103,7 +113,7 @@ function [lambda_opt_universal, lambda_opt_list_sample, sample_indices] = ridge_
 
                 y = Y_sample(:, i);
 
-                [~, ~, lambda_opt] = ridge_tpc(y, regressor_matrix, lambda_values, K, num_cores, b_lambda_opt_only, calculate_sigma);
+                [~, ~, lambda_opt] = ridge_tpc(y, regressor_matrix, lambda_values, K, num_cores_ridge, b_lambda_opt_only, calculate_sigma);
                 lambda_opt_list_sample(i) = lambda_opt;
             end
         end

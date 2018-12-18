@@ -21,7 +21,7 @@ function B_lambda_opt = ridge_optimal_regression_coefficients(Y, regressor_matri
     %
     % B_lambda_opt: the regression coefficients with the optimal value of lambda.
     
-    % version 1.1, 2018-12-11, Jonatan Ropponen
+    % version 1.2, 2018-12-18, Jonatan Ropponen
 
     
     % By default, parallel computing is not used.
@@ -36,9 +36,11 @@ function B_lambda_opt = ridge_optimal_regression_coefficients(Y, regressor_matri
     B_lambda_opt = zeros(dimensions);
 
     if num_cores > 1
+        
+        [~, par_workers] = create_parpool(num_cores);
 
         parfor i = 1:M
-
+            
             y = Y(:, i);
 
             % Using Matlab's default ridge function
@@ -51,6 +53,10 @@ function B_lambda_opt = ridge_optimal_regression_coefficients(Y, regressor_matri
             % [~, b_lambda_opt] = ridge_tpc(y, X, lambda, training_sets, b_lambda_opt_only, calculate_sigma);
 
             B_lambda_opt(i, :, :) = b;
+        end
+        
+        if ~isempty(par_workers)
+            delete(par_workers);
         end
 
     else

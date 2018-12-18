@@ -34,7 +34,7 @@ function [lambda_opt, cv_error_lambda] = ridge_cross_validation(y, X, lambda, K,
     % cv_error_lambda: the error terms calculated by cross-validation with
     % various values of lambda.
     %
-    % version 2.0, 2018-12-11; Jonatan Ropponen, Tomi Karjalainen
+    % version 2.1, 2018-12-18; Jonatan Ropponen, Tomi Karjalainen
     
     % Default values
     if nargin < 3
@@ -92,60 +92,8 @@ function [lambda_opt, cv_error_lambda] = ridge_cross_validation(y, X, lambda, K,
             [~, par_workers] = create_parpool(num_cores);
         
             parfor i = 1:K
-
                 current_indices = cell2mat(training_set_indices(i));
-
-                % Matrices containing only the ith training set
-                X_i = X(current_indices, :);
-                y_i = y(current_indices, :);
-
-                y_i_mean = mean(y_i);
-                y_i_centered = y_i - y_i_mean;
-
-                Z_i = zscore(X_i);
-
-                excluded_set_size = size(Z_i, 1);
-
-                % Matrices with the ith training set removed
-                X_neg_i = X;
-                y_neg_i = y;
-
-                X_neg_i(current_indices, :) = [];
-                y_neg_i(current_indices, :) = [];
-
-
-                % Compiling the values of ridge coefficients after the removal
-
-                % First centering y
-                y_neg_i_mean = mean(y_neg_i);
-                y_neg_i_centered = y_neg_i - y_neg_i_mean;
-
-                % Standardizing the design matrix
-                Z_neg_i = zscore(X_neg_i);
-
-                % Estimating the ridge coefficients
-                p_neg_i = size(X_neg_i, 2);     
-                b_lambda_neg_i = zeros(p_neg_i, n_lambda);
-                [U_neg_i, S_neg_i, V_neg_i] = svd(Z_neg_i, 'econ');
-                d_neg_i = diag(S_neg_i);
-                A_neg_i = U_neg_i' * y_neg_i_centered;
-
-                f_lambda_neg_i = zeros(excluded_set_size, 1);
-
-                for j = 1:n_lambda
-
-                    di_neg_i = d_neg_i ./ (d_neg_i.^2 + lambda(j));
-                    b_lambda_neg_i(:, j) = V_neg_i * diag(di_neg_i) * A_neg_i;
-
-                    % Calculating the cross-validation error.
-                    % Note that the values of b are applied on the excluded
-                    % subset, i.e. the training set chosen as the validation
-                    % set.
-
-                    f_lambda_neg_i(:, j) = Z_i * b_lambda_neg_i(:, j);
-                    cv_error_lambda_i(i, j) = (excluded_set_size)^(-1) * sum((y_i_centered - f_lambda_neg_i(:, j)).^2);
-
-                end
+                cv_error_lambda_i(i, :) = ridge_cv_error_calculation(y, X, lambda, current_indices);
             end
             
             if ~isempty(par_workers)
@@ -155,60 +103,8 @@ function [lambda_opt, cv_error_lambda] = ridge_cross_validation(y, X, lambda, K,
         else
             
             for i = 1:K
-
                 current_indices = cell2mat(training_set_indices(i));
-
-                % Matrices containing only the ith training set
-                X_i = X(current_indices, :);
-                y_i = y(current_indices, :);
-
-                y_i_mean = mean(y_i);
-                y_i_centered = y_i - y_i_mean;
-
-                Z_i = zscore(X_i);
-
-                excluded_set_size = size(Z_i, 1);
-
-                % Matrices with the ith training set removed
-                X_neg_i = X;
-                y_neg_i = y;
-
-                X_neg_i(current_indices, :) = [];
-                y_neg_i(current_indices, :) = [];
-
-
-                % Compiling the values of ridge coefficients after the removal
-
-                % First centering y
-                y_neg_i_mean = mean(y_neg_i);
-                y_neg_i_centered = y_neg_i - y_neg_i_mean;
-
-                % Standardizing the design matrix
-                Z_neg_i = zscore(X_neg_i);
-
-                % Estimating the ridge coefficients
-                p_neg_i = size(X_neg_i, 2);     
-                b_lambda_neg_i = zeros(p_neg_i, n_lambda);
-                [U_neg_i, S_neg_i, V_neg_i] = svd(Z_neg_i, 'econ');
-                d_neg_i = diag(S_neg_i);
-                A_neg_i = U_neg_i' * y_neg_i_centered;
-
-                f_lambda_neg_i = zeros(excluded_set_size, 1);
-
-                for j = 1:n_lambda
-
-                    di_neg_i = d_neg_i ./ (d_neg_i.^2 + lambda(j));
-                    b_lambda_neg_i(:, j) = V_neg_i * diag(di_neg_i) * A_neg_i;
-
-                    % Calculating the cross-validation error.
-                    % Note that the values of b are applied on the excluded
-                    % subset, i.e. the training set chosen as the validation
-                    % set.
-
-                    f_lambda_neg_i(:, j) = Z_i * b_lambda_neg_i(:, j);
-                    cv_error_lambda_i(i, j) = (excluded_set_size)^(-1) * sum((y_i_centered - f_lambda_neg_i(:, j)).^2);
-
-                end
+                cv_error_lambda_i(i, :) = ridge_cv_error_calculation(y, X, lambda, current_indices);
             end
         end
         
