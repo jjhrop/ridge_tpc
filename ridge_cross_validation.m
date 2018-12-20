@@ -41,6 +41,17 @@ function [lambda_opt, cv_error_lambda] = ridge_cross_validation(y, X, lambda, K,
         lambda = [0 1 10 100 1000 10^4 10^5 10^6];
     end
     
+    n_lambda = length(lambda);
+    
+    % Lambda must not be given negative values.
+    for i = 1:n_lambda
+        if lambda(i) < 0
+            lambda(i) = 0;
+            msg = 'Lambda must be non-negative.';
+            disp(msg);
+        end
+    end
+    
     if nargin < 4
         K = 2;
     end
@@ -49,8 +60,6 @@ function [lambda_opt, cv_error_lambda] = ridge_cross_validation(y, X, lambda, K,
     if nargin < 5 || num_cores < 1
         num_cores = 1;
     end
-    
-    n_lambda = length(lambda);
     
     % If only a single value of lambda has been provided, we can simply return
     % it.

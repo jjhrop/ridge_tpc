@@ -41,12 +41,23 @@ function [b_lambda, b_lambda_opt, lambda_opt, sigma_b] = ridge_tpc(y, X, lambda,
     %
     % b_lambda_opt: the values of b_lambda that correspond to the optimal value of lambda.
     %
-    % version 3.1, 2018-12-11; Jonatan Ropponen, Tomi Karjalainen
+    % version 3.2, 2018-12-20; Jonatan Ropponen, Tomi Karjalainen
     
     % Default values
     
     if nargin < 3
         lambda = [0 1 10 100 1000 10^4 10^5 10^6];
+    end
+    
+    n_lambda = length(lambda);
+    
+    % Lambda must not be given negative values.
+    for i = 1:n_lambda
+        if lambda(i) < 0
+            lambda(i) = 0;
+            msg = 'Lambda must be non-negative.';
+            disp(msg);
+        end
     end
     
     if nargin < 4
@@ -75,7 +86,6 @@ function [b_lambda, b_lambda_opt, lambda_opt, sigma_b] = ridge_tpc(y, X, lambda,
 
     % Estimating the ridge coefficients.
     p = size(X, 2);
-    n_lambda = length(lambda);
     b_lambda = zeros(p, n_lambda);
     [U, S, V] = svd(Z, 'econ');
     d = diag(S);
@@ -104,6 +114,10 @@ function [b_lambda, b_lambda_opt, lambda_opt, sigma_b] = ridge_tpc(y, X, lambda,
     % The ridge coefficients with the optimal value of lambda
     
     lambda_index = find(lambda == lambda_opt);
+    
+    if length(lambda_index) > 1   
+        lambda_index = lambda_index(1);
+    end
     
     if b_lambda_opt_only == 0
         b_lambda_opt = b_lambda(:, lambda_index);

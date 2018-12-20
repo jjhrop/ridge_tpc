@@ -1,4 +1,4 @@
-function [Y_hat_lambda_opt, B_lambda_opt, lambda_opt_universal, lambda_opt_list_sample, sample_indices] = ridge_image(image_file_path, regressor_matrix, lambda_values, mask_file_path, lambda_opt_only, sample_fraction, K, num_cores)
+function [Y_hat_lambda_opt, B_lambda_opt, lambda_opt_universal, lambda_opt_list_sample, sample_indices] = ridge_image(image_file_path, regressor_matrix, lambda, mask_file_path, lambda_opt_only, sample_fraction, K, num_cores)
 
     % Analyzing observed responses with the ridge regression function 
     % ridge_tpc. A universal value of parameter lambda is determined for all
@@ -14,7 +14,7 @@ function [Y_hat_lambda_opt, B_lambda_opt, lambda_opt_universal, lambda_opt_list_
     %
     % Optional inputs:
     %
-    % lambda_values: an array containing the lambda values utilized in ridge
+    % lambda: an array containing the lambda values utilized in ridge
     % regression, e.g. [0 0.1 1 10 100 1000 10^4 10^5 10^6].
     %
     % mask_file_path: the path of a .nii file with a mask, e.g. 
@@ -52,26 +52,38 @@ function [Y_hat_lambda_opt, B_lambda_opt, lambda_opt_universal, lambda_opt_list_
     %
     % sample_indices: the indices of the voxels chosen for the sample.
     
-    % version 1.1, 2018-12-11, Jonatan Ropponen
+    % version 1.2, 2018-12-20, Jonatan Ropponen
 
     % example script
     %
     % image_file_path = '/example_directory/EPI_preprocessed/103/epi_preprocessed.nii';
     % load('/example_directory/localizer_regressors/Emotion/103.mat');
     % regressor_matrix = R;
-    % lambda_values = [0 1 10 100 1000 10^4 10^5 10^6];
+    % lambda = [0 1 10 100 1000 10^4 10^5 10^6];
     % mask_file_path = '/example_directory/Ridge_regression_files/MNI152_T1_2mm_brain_mask.nii';
     % lambda_opt_only = 0;
     % sample_fraction = 0.1;
     % K = 2;
     % num_cores = 1;
-    % [Y_hat_lambda_opt, B_lambda_opt, lambda_opt_universal, lambda_opt_list_sample, sample_indices] = ridge_image(image_file_path, regressor_matrix, lambda_values, mask_file_path, lambda_opt_only, sample_fraction, K, num_cores);
+    % [Y_hat_lambda_opt, B_lambda_opt, lambda_opt_universal, lambda_opt_list_sample, sample_indices] = ridge_image(image_file_path, regressor_matrix, lambda, mask_file_path, lambda_opt_only, sample_fraction, K, num_cores);
 
+    
     % Default values
     
     % The default values of lambda if they are not specified in the inputs
-    if nargin < 3 || isempty(lambda_values)
-        lambda_values = [0 1 10 100 1000 10^4 10^5 10^6];
+    if nargin < 3 || isempty(lambda)
+        lambda = [0 1 10 100 1000 10^4 10^5 10^6];
+    end
+    
+    n_lambda = length(lambda);
+    
+    % Lambda must not be given negative values.
+    for i = 1:n_lambda
+        if lambda(i) < 0
+            lambda(i) = 0;
+            msg = 'Lambda must be non-negative.';
+            disp(msg);
+        end
     end
     
     if nargin < 5 || isempty(lambda_opt_only)
@@ -145,15 +157,15 @@ function [Y_hat_lambda_opt, B_lambda_opt, lambda_opt_universal, lambda_opt_list_
     
     % If only a single value of lambda is given, this can be skipped.
 
-    if length(lambda_values) == 1
+    if length(lambda) == 1
     
-        lambda_opt_universal = lambda_values(1);
+        lambda_opt_universal = lambda(1);
         lambda_opt_list_sample = [];
         sample_indices = [];
         
     else
         
-        [lambda_opt_universal, lambda_opt_list_sample, sample_indices] = ridge_optimal_universal_parameter(Y, regressor_matrix, lambda_values, sample_fraction, K, num_cores);
+        [lambda_opt_universal, lambda_opt_list_sample, sample_indices] = ridge_optimal_universal_parameter(Y, regressor_matrix, lambda, sample_fraction, K, num_cores);
     
     end
     

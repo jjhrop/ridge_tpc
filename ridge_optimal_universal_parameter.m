@@ -1,4 +1,4 @@
-function [lambda_opt_universal, lambda_opt_list_sample, sample_indices] = ridge_optimal_universal_parameter(Y, regressor_matrix, lambda_values, sample_fraction, K, num_cores)
+function [lambda_opt_universal, lambda_opt_list_sample, sample_indices] = ridge_optimal_universal_parameter(Y, regressor_matrix, lambda, sample_fraction, K, num_cores)
 
     % Determining the optimal value of the ridge regression parameter lambda for
     % all voxels. The calculation can be carried out for a sample of voxels
@@ -12,7 +12,7 @@ function [lambda_opt_universal, lambda_opt_list_sample, sample_indices] = ridge_
     %
     % Optional inputs:
     %
-    % lambda_values: an array containing the lambda values utilized in ridge
+    % lambda: an array containing the lambda values utilized in ridge
     % regression, e.g. [0 0.1 1 10 100 1000 10^4 10^5 10^6].
     %
     % sample_fraction: the fraction of all voxels that is picked for the
@@ -36,13 +36,24 @@ function [lambda_opt_universal, lambda_opt_list_sample, sample_indices] = ridge_
     % sample.
     %
     % sample_indices: the indices of the voxels chosen for the sample.
-    
-    % version 1.2, 2018-12-18, Jonatan Ropponen
+    %
+    % version 1.3, 2018-12-20, Jonatan Ropponen
     
     
     % Default entries for optional inputs:
-    if nargin < 3 || isempty(lambda_values)
-        lambda_values = [0 0.1 1 10 100 1000 10^4 10^5 10^6];
+    if nargin < 3 || isempty(lambda)
+        lambda = [0 0.1 1 10 100 1000 10^4 10^5 10^6];
+    end
+    
+    n_lambda = length(lambda);
+    
+    % Lambda must not be given negative values.
+    for i = 1:n_lambda
+        if lambda(i) < 0
+            lambda(i) = 0;
+            msg = 'Lambda must be non-negative.';
+            disp(msg);
+        end
     end
     
     if nargin < 4 || isempty(sample_fraction)
@@ -70,10 +81,10 @@ function [lambda_opt_universal, lambda_opt_list_sample, sample_indices] = ridge_
     
     % If only a single value of lambda is given, this can be skipped.
 
-    if length(lambda_values) == 1
+    if length(lambda) == 1
     
         lambda_opt_list_sample = [];
-        lambda_opt_universal = lambda_values(1);
+        lambda_opt_universal = lambda(1);
         
     else
         
@@ -99,7 +110,7 @@ function [lambda_opt_universal, lambda_opt_list_sample, sample_indices] = ridge_
 
                 y = Y_sample(:, i);
 
-                [~, ~, lambda_opt] = ridge_tpc(y, regressor_matrix, lambda_values, K, num_cores_ridge, b_lambda_opt_only, calculate_sigma);
+                [~, ~, lambda_opt] = ridge_tpc(y, regressor_matrix, lambda, K, num_cores_ridge, b_lambda_opt_only, calculate_sigma);
                 lambda_opt_list_sample(i) = lambda_opt;
             end
             
@@ -113,7 +124,7 @@ function [lambda_opt_universal, lambda_opt_list_sample, sample_indices] = ridge_
 
                 y = Y_sample(:, i);
 
-                [~, ~, lambda_opt] = ridge_tpc(y, regressor_matrix, lambda_values, K, num_cores_ridge, b_lambda_opt_only, calculate_sigma);
+                [~, ~, lambda_opt] = ridge_tpc(y, regressor_matrix, lambda, K, num_cores_ridge, b_lambda_opt_only, calculate_sigma);
                 lambda_opt_list_sample(i) = lambda_opt;
             end
         end

@@ -20,9 +20,16 @@ function B_lambda_opt = ridge_optimal_regression_coefficients(Y, regressor_matri
     % Outputs:
     %
     % B_lambda_opt: the regression coefficients with the optimal value of lambda.
-    
-    % version 1.2, 2018-12-18, Jonatan Ropponen
+    %
+    % version 1.3, 2018-12-20, Jonatan Ropponen
 
+    
+    % Lambda must not be given negative values.
+    if lambda_opt_universal < 0
+        lambda_opt_universal = 0;
+        msg = 'Lambda must be non-negative.';
+        disp(msg);
+    end
     
     % By default, parallel computing is not used.
     if nargin < 4 || num_cores < 1

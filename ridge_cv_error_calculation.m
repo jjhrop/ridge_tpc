@@ -27,8 +27,23 @@ function cv_error_lambda_i = ridge_cv_error_calculation(y, X, lambda, indices)
     % ridge_cross_validation.m will be 
     % (the number of training sets) x (the length of lambda) in size. 
     %
-    % version 1.0, 2018-12-18; Jonatan Ropponen, Tomi Karjalainen
+    % version 1.1, 2018-12-20; Jonatan Ropponen, Tomi Karjalainen
     
+    % The default values of lambda if they are not specified in the inputs
+    if nargin < 3 || isempty(lambda)
+        lambda = [0 1 10 100 1000 10^4 10^5 10^6];
+    end
+    
+    n_lambda = length(lambda);
+    
+    % Lambda must not be given negative values.
+    for i = 1:n_lambda
+        if lambda(i) < 0
+            lambda(i) = 0;
+            msg = 'Lambda must be non-negative.';
+            disp(msg);
+        end
+    end
 
     % Matrices containing only the ith training set
     X_i = X(indices, :);
@@ -59,8 +74,7 @@ function cv_error_lambda_i = ridge_cv_error_calculation(y, X, lambda, indices)
     Z_neg_i = zscore(X_neg_i);
 
     % Estimating the ridge coefficients
-    p_neg_i = size(X_neg_i, 2);   
-    n_lambda = length(lambda);
+    p_neg_i = size(X_neg_i, 2);
     b_lambda_neg_i = zeros(p_neg_i, n_lambda);
     [U_neg_i, S_neg_i, V_neg_i] = svd(Z_neg_i, 'econ');
     d_neg_i = diag(S_neg_i);
