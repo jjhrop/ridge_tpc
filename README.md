@@ -8,17 +8,10 @@ The code has been developed at the Human Emotion Systems Lab at the University o
 Author: Jonatan Ropponen
 Contributions by Tomi Karjalainen
 
-18 December 2018
+20 December 2018
 
 
-Includes functions (on 18 December 2018):
-
-ridge_image.m
-ridge_tpc.m
-ridge_cross_validation.m
-ridge_cv_error_calculation.m
-ridge_optimal_universal_parameter.m
-ridge_optimal_regression_coefficients.m
+Includes functions (on 20 December 2018): ridge_image.m, ridge_tpc.m, ridge_cross_validation.m, ridge_cv_error_calculation.m, ridge_optimal_universal_parameter.m, ridge_optimal_regression_coefficients.m
 
 create_parpool.m (auxiliary function applied in the context of parallel processing)
 
