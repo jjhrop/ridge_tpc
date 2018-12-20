@@ -34,7 +34,7 @@ function [lambda_opt, cv_error_lambda] = ridge_cross_validation(y, X, lambda, K,
     % cv_error_lambda: the error terms calculated by cross-validation with
     % various values of lambda.
     %
-    % version 2.1, 2018-12-18; Jonatan Ropponen, Tomi Karjalainen
+    % version 2.2, 2018-12-20; Jonatan Ropponen, Tomi Karjalainen
     
     % Default values
     if nargin < 3
@@ -108,15 +108,14 @@ function [lambda_opt, cv_error_lambda] = ridge_cross_validation(y, X, lambda, K,
             end
         end
         
-        % The error overall for each value of lambda
-        
+        % Determining the error overall for each value of lambda.
         for i = 1:n_lambda
-            cv_error_lambda(i) = K^(-1) * sum(cv_error_lambda_i(:, i));
+            cv_error_lambda(i) = mean(cv_error_lambda_i(:, i));
         end
         
         [~, opt_idx] = min(cv_error_lambda);
         lambda_opt = lambda(opt_idx(1));
-    
+        
     end
 end
 
