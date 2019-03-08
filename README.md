@@ -11,7 +11,7 @@ Contributions by Tomi Karjalainen
 20 December 2018
 
 
-Includes functions (on 20 December 2018): ridge_image.m, ridge_tpc.m, ridge_cross_validation.m, ridge_cv_error_calculation.m, ridge_optimal_universal_parameter.m, ridge_optimal_regression_coefficients.m, create_parpool.m (auxiliary function applied in the context of parallel processing)
+Includes functions (on 8 March 2019): ridge_image.m, ridge_tpc.m, ridge_cross_validation.m, ridge_cv_error_calculation.m, ridge_optimal_universal_parameter.m, ridge_optimal_regression_coefficients.m, create_parpool.m (auxiliary function applied in the context of parallel processing)
 
 
 Example script for ridge_image.m (last edited on 8 March 2019):
@@ -29,7 +29,7 @@ num_cores = 1;
 [Y_hat_lambda_opt, B_lambda_opt, lambda_opt_universal, lambda_opt_list_sample, sample_indices] = ridge_image(image_file_path, regressor_matrix, lambda_values, mask_file_path, lambda_opt_only, sample_fraction, K, cv_randomized, num_cores);
 
 
-References for the mathematical formulas on ridge regression and cross-validation:
+References for the mathematical formulas adopted for ridge regression and cross-validation:
 
 Regularization: Ridge Regression and the LASSO
 University of Stanford; Statistics 305: Autumn Quarter 2006/2007
