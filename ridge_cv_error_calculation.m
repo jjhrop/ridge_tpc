@@ -16,7 +16,7 @@ function cv_error_lambda_i = ridge_cv_error_calculation(y, X, lambda, indices)
     % [0 1 10 100 1000 10^4 10^5 10^6]. If lambda consists of m elements, 
     % the calculated b_lambda is p-by-m in size.
     %
-    % indices: Indices for the timepoints that correspond to a training
+    % indices: Indices for the data points that correspond to a training
     % set.
     %
     % Outputs:
@@ -27,7 +27,7 @@ function cv_error_lambda_i = ridge_cv_error_calculation(y, X, lambda, indices)
     % ridge_cross_validation.m will be 
     % (the number of training sets) x (the length of lambda) in size. 
     %
-    % version 1.1, 2018-12-20; Jonatan Ropponen, Tomi Karjalainen
+    % version 1.2, 2019-03-08; Jonatan Ropponen, Tomi Karjalainen
     
     % The default values of lambda if they are not specified in the inputs
     if nargin < 3 || isempty(lambda)

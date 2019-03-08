@@ -1,4 +1,4 @@
-function [lambda_opt, cv_error_lambda] = ridge_cross_validation(y, X, lambda, K, num_cores)
+function [lambda_opt, cv_error_lambda] = ridge_cross_validation(y, X, lambda, K, cv_randomized, num_cores)
     
     % Performing cross-validation on ridge regression data to determine the
     % optimal value of parameter lambda for a single voxel. The function 
@@ -21,8 +21,15 @@ function [lambda_opt, cv_error_lambda] = ridge_cross_validation(y, X, lambda, K,
     %
     % K: The number of training sets used in cross-validation. Each set 
     % is treated as the validation set in turn. The data is split evenly 
-    % into the sets by its timepoints. E.g. with K = 2 the two 
+    % into the sets by its data points. E.g. with K = 2 the two 
     % training sets are the first half and the second half.
+    %
+    % cv_randomized: Signifies whether the data points are 
+    % randomized for cross-validation. For instance, they are not
+    % randomized when the data represents a time series, but randomization
+    % is more suitable when the data points represent different test 
+    % subjects instead. Possible values: 0 and 1. By default, the data 
+    % points are randomized.
     %
     % num_cores: The number of cores to be used for parallel processing.
     % Default: 1 (non-parallel).
@@ -34,7 +41,7 @@ function [lambda_opt, cv_error_lambda] = ridge_cross_validation(y, X, lambda, K,
     % cv_error_lambda: the error terms calculated by cross-validation with
     % various values of lambda.
     %
-    % version 2.2, 2018-12-20; Jonatan Ropponen, Tomi Karjalainen
+    % version 3.0, 2019-03-08; Jonatan Ropponen, Tomi Karjalainen
     
     % Default values
     if nargin < 3
@@ -56,8 +63,12 @@ function [lambda_opt, cv_error_lambda] = ridge_cross_validation(y, X, lambda, K,
         K = 2;
     end
     
+    if nargin < 5
+        cv_randomized = 1;
+    end
+    
     % By default, parallel computing is not used.
-    if nargin < 5 || num_cores < 1
+    if nargin < 6 || num_cores < 1
         num_cores = 1;
     end
     
@@ -77,6 +88,15 @@ function [lambda_opt, cv_error_lambda] = ridge_cross_validation(y, X, lambda, K,
         
         subset_size = number_of_indices / K;
         
+        % Randomizing the order of the data points for cross-validation if
+        % enabled.
+
+        if cv_randomized
+            indices = randperm(number_of_indices);  
+        else    
+            indices = 1:number_of_indices;       
+        end
+        
         training_set_indices = {};
         
         for i = 1:K
@@ -84,7 +104,7 @@ function [lambda_opt, cv_error_lambda] = ridge_cross_validation(y, X, lambda, K,
             first_index = round((i-1) * subset_size) + 1;
             last_index = min(round(i * subset_size), number_of_indices);
             
-            new_training_set = first_index : last_index;
+            new_training_set = indices(first_index:last_index);
         
             training_set_indices = [training_set_indices, {new_training_set}];
         end

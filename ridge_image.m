@@ -1,4 +1,4 @@
-function [Y_hat_lambda_opt, B_lambda_opt, lambda_opt_universal, lambda_opt_list_sample, sample_indices] = ridge_image(image_file_path, regressor_matrix, lambda, mask_file_path, lambda_opt_only, sample_fraction, K, num_cores)
+function [Y_hat_lambda_opt, B_lambda_opt, lambda_opt_universal, lambda_opt_list_sample, sample_indices] = ridge_image(image_file_path, regressor_matrix, lambda, mask_file_path, lambda_opt_only, sample_fraction, K, cv_randomized, num_cores)
 
     % Analyzing observed responses with the ridge regression function 
     % ridge_tpc. A universal value of parameter lambda is determined for all
@@ -30,8 +30,15 @@ function [Y_hat_lambda_opt, B_lambda_opt, lambda_opt_universal, lambda_opt_list_
     %
     % K: The number of training sets used in cross-validation. Each set 
     % is treated as the validation set in turn. The data is split evenly 
-    % into the sets by its timepoints. E.g. with K = 2 the two 
+    % into the sets by its data points. E.g. with K = 2 the two 
     % training sets are the first half and the second half.
+    %
+    % cv_randomized: Signifies whether the data points are 
+    % randomized for cross-validation. For instance, they are not
+    % randomized when the data represents a time series, but randomization
+    % is more suitable when the data points represent different test 
+    % subjects instead. Possible values: 0 and 1. By default, the data 
+    % points are randomized.
     %
     % num_cores: the number of cores to be used for parallel processing.
     % Default: 1 (non-parallel).
@@ -51,8 +58,8 @@ function [Y_hat_lambda_opt, B_lambda_opt, lambda_opt_universal, lambda_opt_list_
     % sample.
     %
     % sample_indices: the indices of the voxels chosen for the sample.
-    
-    % version 1.2, 2018-12-20, Jonatan Ropponen
+    %
+    % version 2.0, 2019-03-08, Jonatan Ropponen
 
     % example script
     %
@@ -64,8 +71,9 @@ function [Y_hat_lambda_opt, B_lambda_opt, lambda_opt_universal, lambda_opt_list_
     % lambda_opt_only = 0;
     % sample_fraction = 0.1;
     % K = 2;
+    % cv_randomized = 1;
     % num_cores = 1;
-    % [Y_hat_lambda_opt, B_lambda_opt, lambda_opt_universal, lambda_opt_list_sample, sample_indices] = ridge_image(image_file_path, regressor_matrix, lambda, mask_file_path, lambda_opt_only, sample_fraction, K, num_cores);
+    % [Y_hat_lambda_opt, B_lambda_opt, lambda_opt_universal, lambda_opt_list_sample, sample_indices] = ridge_image(image_file_path, regressor_matrix, lambda, mask_file_path, lambda_opt_only, sample_fraction, K, cv_randomized, num_cores);
 
     
     % Default values
@@ -98,8 +106,12 @@ function [Y_hat_lambda_opt, B_lambda_opt, lambda_opt_universal, lambda_opt_list_
         K = 2;
     end
     
+    if nargin < 8
+        cv_randomized = 1;
+    end
+    
     % By default, parallel computing is not used.
-    if nargin < 8 || isempty(num_cores) || num_cores < 1
+    if nargin < 9 || isempty(num_cores) || num_cores < 1
         num_cores = 1;
     end
         
@@ -108,13 +120,13 @@ function [Y_hat_lambda_opt, B_lambda_opt, lambda_opt_universal, lambda_opt_list_
     img = spm_read_vols(V);
     size_original = size(img);
     
-    number_of_time_points = size_original(4);
+    number_of_data_points = size_original(4);
     number_of_voxels = prod(size_original(1:3));
     
     % If no mask has been specified, we determine a mask based on the data.
     if nargin < 4 || isempty(mask_file_path)
     
-        % The mean values over the time points
+        % The mean values over the data points
         mean_img = mean(img, 4, 'omitnan');
         img_max_value = max(img(:));
         threshold = 0.8;
@@ -135,9 +147,9 @@ function [Y_hat_lambda_opt, B_lambda_opt, lambda_opt_universal, lambda_opt_list_
     siz = size(img_2);
 
     % Applying the mask to the image.
-    Y = zeros(length(indices), number_of_time_points);
+    Y = zeros(length(indices), number_of_data_points);
 
-    for i = 1:number_of_time_points
+    for i = 1:number_of_data_points
          img_temp = img(:, :, :, i);
          img_temp_2 = img_temp(img_2);
          Y(:, i) = reshape(img_temp_2, length(indices), 1);
@@ -165,7 +177,7 @@ function [Y_hat_lambda_opt, B_lambda_opt, lambda_opt_universal, lambda_opt_list_
         
     else
         
-        [lambda_opt_universal, lambda_opt_list_sample, sample_indices] = ridge_optimal_universal_parameter(Y, regressor_matrix, lambda, sample_fraction, K, num_cores);
+        [lambda_opt_universal, lambda_opt_list_sample, sample_indices] = ridge_optimal_universal_parameter(Y, regressor_matrix, lambda, sample_fraction, K, cv_randomized, num_cores);
     
     end
     
@@ -193,7 +205,7 @@ function [Y_hat_lambda_opt, B_lambda_opt, lambda_opt_universal, lambda_opt_list_
 
         % Calculating an estimate of Y with the universal optimal value 
         % of lambda.
-        dimensions_2 = [prod(siz(1:3)), number_of_time_points];
+        dimensions_2 = [prod(siz(1:3)), number_of_data_points];
         Y_hat = zeros(dimensions_2);
 
         for i = 1:size(B_lambda_opt_2, 1)
@@ -204,7 +216,7 @@ function [Y_hat_lambda_opt, B_lambda_opt, lambda_opt_universal, lambda_opt_list_
 
         end
 
-        Y_hat_lambda_opt = reshape(Y_hat, siz(1), siz(2), siz(3), number_of_time_points);
+        Y_hat_lambda_opt = reshape(Y_hat, siz(1), siz(2), siz(3), number_of_data_points);
     
     else
         

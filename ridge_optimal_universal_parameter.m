@@ -1,4 +1,4 @@
-function [lambda_opt_universal, lambda_opt_list_sample, sample_indices] = ridge_optimal_universal_parameter(Y, regressor_matrix, lambda, sample_fraction, K, num_cores)
+function [lambda_opt_universal, lambda_opt_list_sample, sample_indices] = ridge_optimal_universal_parameter(Y, regressor_matrix, lambda, sample_fraction, K, cv_randomized, num_cores)
 
     % Determining the optimal value of the ridge regression parameter lambda for
     % all voxels. The calculation can be carried out for a sample of voxels
@@ -20,8 +20,15 @@ function [lambda_opt_universal, lambda_opt_list_sample, sample_indices] = ridge_
     %
     % K: The number of training sets used in cross-validation. Each set 
     % is treated as the validation set in turn. The data is split evenly 
-    % into the sets by its timepoints. E.g. with K = 2 the two 
+    % into the sets by its data points. E.g. with K = 2 the two 
     % training sets are the first half and the second half.
+    %
+    % cv_randomized: Signifies whether the data points are 
+    % randomized for cross-validation. For instance, they are not
+    % randomized when the data represents a time series, but randomization
+    % is more suitable when the data points represent different test 
+    % subjects instead. Possible values: 0 and 1. By default, the data 
+    % points are randomized.
     %
     % num_cores: the number of cores to be used for parallel processing.
     % Default: 1 (non-parallel).
@@ -37,7 +44,7 @@ function [lambda_opt_universal, lambda_opt_list_sample, sample_indices] = ridge_
     %
     % sample_indices: the indices of the voxels chosen for the sample.
     %
-    % version 1.3, 2018-12-20, Jonatan Ropponen
+    % version 2.0, 2019-03-08, Jonatan Ropponen
     
     
     % Default entries for optional inputs:
@@ -61,14 +68,18 @@ function [lambda_opt_universal, lambda_opt_list_sample, sample_indices] = ridge_
     end
 
     % Default settings for cross-validation:
-    % Splitting the data into two subsets by its timepoints.
+    % Splitting the data into two subsets by its data points.
     
     if nargin < 5 || isempty(K)
         K = 2;
     end
     
+    if nargin < 6
+        cv_randomized = 1;
+    end
+    
     % By default, parallel computing is not used.
-    if nargin < 6 || num_cores < 1
+    if nargin < 7 || num_cores < 1
         num_cores = 1;
     end
         
@@ -110,7 +121,7 @@ function [lambda_opt_universal, lambda_opt_list_sample, sample_indices] = ridge_
 
                 y = Y_sample(:, i);
 
-                [~, ~, lambda_opt] = ridge_tpc(y, regressor_matrix, lambda, K, num_cores_ridge, b_lambda_opt_only, calculate_sigma);
+                [~, ~, lambda_opt] = ridge_tpc(y, regressor_matrix, lambda, K, cv_randomized, num_cores_ridge, b_lambda_opt_only, calculate_sigma);
                 lambda_opt_list_sample(i) = lambda_opt;
             end
             
@@ -124,7 +135,7 @@ function [lambda_opt_universal, lambda_opt_list_sample, sample_indices] = ridge_
 
                 y = Y_sample(:, i);
 
-                [~, ~, lambda_opt] = ridge_tpc(y, regressor_matrix, lambda, K, num_cores_ridge, b_lambda_opt_only, calculate_sigma);
+                [~, ~, lambda_opt] = ridge_tpc(y, regressor_matrix, lambda, K, cv_randomized, num_cores_ridge, b_lambda_opt_only, calculate_sigma);
                 lambda_opt_list_sample(i) = lambda_opt;
             end
         end

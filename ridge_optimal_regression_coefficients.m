@@ -21,7 +21,7 @@ function B_lambda_opt = ridge_optimal_regression_coefficients(Y, regressor_matri
     %
     % B_lambda_opt: the regression coefficients with the optimal value of lambda.
     %
-    % version 1.3, 2018-12-20, Jonatan Ropponen
+    % version 1.4, 2019-03-08, Jonatan Ropponen
 
     
     % Lambda must not be given negative values.
@@ -54,10 +54,11 @@ function B_lambda_opt = ridge_optimal_regression_coefficients(Y, regressor_matri
             b = ridge(y, regressor_matrix, lambda_opt_universal);
 
             % Alternative: with ridge_tpc
-            % training_sets = [0, 0.5, 0.5, 1];
+            % K = 2;
+            % cv_randomized = 1;
             % b_lambda_opt_only = 1;
             % calculate_sigma = 0;
-            % [~, b_lambda_opt] = ridge_tpc(y, X, lambda, training_sets, b_lambda_opt_only, calculate_sigma);
+            % [~, b_lambda_opt] = ridge_tpc(y, X, lambda, K, cv_randomized, b_lambda_opt_only, calculate_sigma);
 
             B_lambda_opt(i, :, :) = b;
         end
@@ -76,10 +77,11 @@ function B_lambda_opt = ridge_optimal_regression_coefficients(Y, regressor_matri
             b = ridge(y, regressor_matrix, lambda_opt_universal);
 
             % Alternative: with ridge_tpc
-            % training_sets = [0, 0.5, 0.5, 1];
+            % K = 2;
+            % cv_randomized = 1;
             % b_lambda_opt_only = 1;
             % calculate_sigma = 0;
-            % [~, b_lambda_opt] = ridge_tpc(y, X, lambda, training_sets, b_lambda_opt_only, calculate_sigma);
+            % [~, b_lambda_opt] = ridge_tpc(y, X, lambda, K, cv_randomized, b_lambda_opt_only, calculate_sigma);
 
             B_lambda_opt(i, :, :) = b;
         end 

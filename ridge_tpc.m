@@ -1,4 +1,4 @@
-function [b_lambda, b_lambda_opt, lambda_opt, sigma_b] = ridge_tpc(y, X, lambda, K, num_cores, b_lambda_opt_only, calculate_sigma)
+function [b_lambda, b_lambda_opt, lambda_opt, sigma_b] = ridge_tpc(y, X, lambda, K, cv_randomized, num_cores, b_lambda_opt_only, calculate_sigma)
 
     % A function for estimating ridge regression coefficients.
     %
@@ -15,8 +15,15 @@ function [b_lambda, b_lambda_opt, lambda_opt, sigma_b] = ridge_tpc(y, X, lambda,
     %
     % K: The number of training sets used in cross-validation. Each set 
     % is treated as the validation set in turn. The data is split evenly 
-    % into the sets by its timepoints. E.g. with K = 2 the two 
+    % into the sets by its data points. E.g. with K = 2 the two 
     % training sets are the first half and the second half.
+    %
+    % cv_randomized: Signifies whether the data points are 
+    % randomized for cross-validation. For instance, they are not
+    % randomized when the data represents a time series, but randomization
+    % is more suitable when the data points represent different test 
+    % subjects instead. Possible values: 0 and 1. By default, the data 
+    % points are randomized.
     %
     % b_lambda_opt_only: whether the analysis should only be carried out to 
     % determine b with the optimal value of lambda rather than with all its 
@@ -41,7 +48,7 @@ function [b_lambda, b_lambda_opt, lambda_opt, sigma_b] = ridge_tpc(y, X, lambda,
     %
     % b_lambda_opt: the values of b_lambda that correspond to the optimal value of lambda.
     %
-    % version 3.2, 2018-12-20; Jonatan Ropponen, Tomi Karjalainen
+    % version 4.0, 2018-03-08; Jonatan Ropponen, Tomi Karjalainen
     
     % Default values
     
@@ -65,15 +72,19 @@ function [b_lambda, b_lambda_opt, lambda_opt, sigma_b] = ridge_tpc(y, X, lambda,
     end
     
     if nargin < 5
+        cv_randomized = 1;
+    end
+    
+    if nargin < 6
         b_lambda_opt_only = 0;
     end
     
     % By default, parallel computing is not used.
-    if nargin < 6 || num_cores < 1
+    if nargin < 7 || num_cores < 1
         num_cores = 1;
     end
     
-    if nargin < 7
+    if nargin < 8
         calculate_sigma = 1;
     end
     
@@ -108,7 +119,7 @@ function [b_lambda, b_lambda_opt, lambda_opt, sigma_b] = ridge_tpc(y, X, lambda,
         lambda_opt = lambda(1);
     else
         % Choosing the optimal lambda by cross-validation.
-        lambda_opt = ridge_cross_validation(y, X, lambda, K, num_cores);
+        lambda_opt = ridge_cross_validation(y, X, lambda, K, cv_randomized, num_cores);
     end
     
     % The ridge coefficients with the optimal value of lambda
