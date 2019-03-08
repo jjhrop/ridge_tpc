@@ -33,7 +33,7 @@ function [Y_hat_lambda_opt, B_lambda_opt, lambda_opt_universal, lambda_opt_list_
     % into the sets by its data points. E.g. with K = 2 the two 
     % training sets are the first half and the second half.
     %
-    % cv_randomized: Signifies whether the data points are 
+    % cv_randomized: Signifies whether the order of the data points is
     % randomized for cross-validation. For instance, they are not
     % randomized when the data represents a time series, but randomization
     % is more suitable when the data points represent different test 
