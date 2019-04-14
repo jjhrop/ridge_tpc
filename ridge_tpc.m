@@ -1,4 +1,4 @@
-function [b_lambda, b_lambda_opt, lambda_opt, sigma_b] = ridge_tpc(y, X, lambda, K, cv_randomized, num_cores, b_lambda_opt_only, calculate_sigma)
+function [b_lambda, b_lambda_opt, lambda_opt, sigma_b, cv_error_lambda] = ridge_tpc(y, X, lambda, K, cv_randomized, num_cores, b_lambda_opt_only, calculate_sigma)
 
     % A function for estimating ridge regression coefficients.
     %
@@ -18,7 +18,7 @@ function [b_lambda, b_lambda_opt, lambda_opt, sigma_b] = ridge_tpc(y, X, lambda,
     % into the sets by its data points. E.g. with K = 2 the two 
     % training sets are the first half and the second half.
     %
-    % cv_randomized: Signifies whether the order of the data points is
+    % cv_randomized: Signifies whether the order of the data points is 
     % randomized for cross-validation. For instance, they are not
     % randomized when the data represents a time series, but randomization
     % is more suitable when the data points represent different test 
@@ -42,13 +42,16 @@ function [b_lambda, b_lambda_opt, lambda_opt, sigma_b] = ridge_tpc(y, X, lambda,
     % b_lambda: ridge regression coefficients with various values of parameter
     % lambda.
     %
-    % sigma_b: the covariance matrix of b.
+    % b_lambda_opt: the values of b_lambda that correspond to the optimal 
+    % value of lambda.
     %
     % lambda_opt: the optimal value of lambda.
     %
-    % b_lambda_opt: the values of b_lambda that correspond to the optimal value of lambda.
+    % sigma_b: the covariance matrix of b.
     %
-    % version 4.0, 2018-03-08; Jonatan Ropponen, Tomi Karjalainen
+    % cv_error_lambda: the cross-validation error for each value of lambda
+    % 
+    % version 4.1, 2018-04-14; Jonatan Ropponen, Tomi Karjalainen
     
     % Default values
     
@@ -117,9 +120,10 @@ function [b_lambda, b_lambda_opt, lambda_opt, sigma_b] = ridge_tpc(y, X, lambda,
     
     if n_lambda == 1
         lambda_opt = lambda(1);
+        cv_error_lambda = [];
     else
         % Choosing the optimal lambda by cross-validation.
-        lambda_opt = ridge_cross_validation(y, X, lambda, K, cv_randomized, num_cores);
+        [lambda_opt, cv_error_lambda] = ridge_cross_validation(y, X, lambda, K, cv_randomized, num_cores);
     end
     
     % The ridge coefficients with the optimal value of lambda

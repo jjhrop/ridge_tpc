@@ -1,4 +1,4 @@
-function [Y_hat_lambda_opt, B_lambda_opt, lambda_opt_universal, lambda_opt_list_sample, sample_indices] = ridge_image(image_file_path, regressor_matrix, lambda, mask_file_path, lambda_opt_only, sample_fraction, K, cv_randomized, num_cores)
+function [Y_hat_lambda_opt, B_lambda_opt, lambda_opt_universal, lambda_opt_list_sample, sample_indices, cv_error_lambda_sample_mean, cv_error_lambda_sample_matrix] = ridge_image(image_file_path, regressor_matrix, lambda, mask_file_path, lambda_opt_only, sample_fraction, K, cv_randomized, num_cores)
 
     % Analyzing observed responses with the ridge regression function 
     % ridge_tpc. A universal value of parameter lambda is determined for all
@@ -33,7 +33,7 @@ function [Y_hat_lambda_opt, B_lambda_opt, lambda_opt_universal, lambda_opt_list_
     % into the sets by its data points. E.g. with K = 2 the two 
     % training sets are the first half and the second half.
     %
-    % cv_randomized: Signifies whether the order of the data points is
+    % cv_randomized: Signifies whether the order of the data points is 
     % randomized for cross-validation. For instance, they are not
     % randomized when the data represents a time series, but randomization
     % is more suitable when the data points represent different test 
@@ -50,16 +50,24 @@ function [Y_hat_lambda_opt, B_lambda_opt, lambda_opt_universal, lambda_opt_list_
     %
     % B_lambda_opt: the regression coefficients with the optimal value of lambda.
     %
-    % lambda_opt_universal: the value of lambda chosen as the universal value for
-    % determining estimates. The most frequent of the optimal values of lambda 
-    % for each voxel.
+    % lambda_opt_universal: The value of lambda chosen as the universal value for
+    % determining estimates. The value with the lowest mean
+    % cross-validation error over sample voxels is chosen.
     %
     % lambda_opt_list_sample: the optimal value of lambda for each voxel in the 
     % sample.
     %
     % sample_indices: the indices of the voxels chosen for the sample.
     %
-    % version 2.0, 2019-03-08, Jonatan Ropponen
+    % cv_error_lambda_sample_mean: the mean cross-valdiation error over the
+    % voxels in the sample for each value of lambda.
+    %
+    % cv_error_lambda_sample_matrix: a matrix of cross-validation errors
+    % for the voxels in the sample and for each value of lambda. The first
+    % coordinate corresponds to voxels and the second to the values of
+    % lambda.
+    %
+    % version 2.1, 2019-04-14, Jonatan Ropponen
 
     % example script
     %
@@ -163,7 +171,8 @@ function [Y_hat_lambda_opt, B_lambda_opt, lambda_opt_universal, lambda_opt_list_
     
     % First we pick a sample of voxels at random and 
     % determine the optimal value of lambda for each of the voxels.
-    % Then we choose the most common lambda for our universal lambda.
+    % Then we choose an universal value for lambda by minimizing the mean 
+    % cross-validation error over sample voxels.
     % Finally, we run the analysis for regression coefficients and 
     % estimates.
     
@@ -174,10 +183,12 @@ function [Y_hat_lambda_opt, B_lambda_opt, lambda_opt_universal, lambda_opt_list_
         lambda_opt_universal = lambda(1);
         lambda_opt_list_sample = [];
         sample_indices = [];
+        cv_error_lambda_sample_mean = [];
+        cv_error_lambda_sample_matrix = [];
         
     else
         
-        [lambda_opt_universal, lambda_opt_list_sample, sample_indices] = ridge_optimal_universal_parameter(Y, regressor_matrix, lambda, sample_fraction, K, cv_randomized, num_cores);
+        [lambda_opt_universal, lambda_opt_list_sample, sample_indices, cv_error_lambda_sample_mean, cv_error_lambda_sample_matrix] = ridge_optimal_universal_parameter(Y, regressor_matrix, lambda, sample_fraction, K, cv_randomized, num_cores);
     
     end
     
