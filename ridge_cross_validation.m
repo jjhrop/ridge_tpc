@@ -41,7 +41,7 @@ function [lambda_opt, cv_error_lambda] = ridge_cross_validation(y, X, lambda, K,
     % cv_error_lambda: the error terms calculated by cross-validation with
     % various values of lambda.
     %
-    % version 3.0, 2019-03-08; Jonatan Ropponen, Tomi Karjalainen
+    % version 3.1, 2019-04-23; Jonatan Ropponen, Tomi Karjalainen
     
     % Default values
     if nargin < 3
@@ -55,7 +55,7 @@ function [lambda_opt, cv_error_lambda] = ridge_cross_validation(y, X, lambda, K,
         if lambda(i) < 0
             lambda(i) = 0;
             msg = 'Lambda must be non-negative.';
-            disp(msg);
+            disp(msg)
         end
     end
     
