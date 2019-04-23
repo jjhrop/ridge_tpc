@@ -1,4 +1,4 @@
-function [Y_hat_lambda_opt, B_lambda_opt, lambda_opt_universal, lambda_opt_list_sample, sample_indices, cv_error_lambda_sample_mean, cv_error_lambda_sample_matrix] = ridge_image(image_file_path, regressor_matrix, lambda, mask_file_path, lambda_opt_only, sample_fraction, K, cv_randomized, num_cores)
+function [Y_hat_lambda_opt, B_lambda_opt, lambda_opt_universal, lambda_opt_list_sample, sample_indices, cv_error_lambda_sample_mean, cv_error_lambda_sample_matrix] = ridge_image(image_file_path, regressor_matrix, lambda, mask_file_path, lambda_opt_only, sample_fraction, K, cv_randomized, num_cores, warnings_on)
 
     % Analyzing observed responses with the ridge regression function 
     % ridge_tpc. A universal value of parameter lambda is determined for all
@@ -43,6 +43,8 @@ function [Y_hat_lambda_opt, B_lambda_opt, lambda_opt_universal, lambda_opt_list_
     % num_cores: the number of cores to be used for parallel processing.
     % Default: 1 (non-parallel).
     %
+    % warnings_on: Whether warning messages are displayed. Default: 1.
+    %
     % Outputs:
     %
     % Y_hat_lambda_opt: An estimate of the observed responses with the optimal
@@ -67,7 +69,7 @@ function [Y_hat_lambda_opt, B_lambda_opt, lambda_opt_universal, lambda_opt_list_
     % coordinate corresponds to voxels and the second to the values of
     % lambda.
     %
-    % version 2.1, 2019-04-14, Jonatan Ropponen
+    % version 2.2, 2019-04-23, Jonatan Ropponen
 
     % example script
     %
@@ -86,6 +88,10 @@ function [Y_hat_lambda_opt, B_lambda_opt, lambda_opt_universal, lambda_opt_list_
     
     % Default values
     
+    if nargin < 10
+        warnings_on = 1;
+    end
+    
     % The default values of lambda if they are not specified in the inputs
     if nargin < 3 || isempty(lambda)
         lambda = [0 1 10 100 1000 10^4 10^5 10^6];
@@ -97,8 +103,11 @@ function [Y_hat_lambda_opt, B_lambda_opt, lambda_opt_universal, lambda_opt_list_
     for i = 1:n_lambda
         if lambda(i) < 0
             lambda(i) = 0;
-            msg = 'Lambda must be non-negative.';
-            disp(msg);
+            
+            if warnings_on
+                msg = 'Lambda must be non-negative.';
+                disp(msg);
+            end
         end
     end
     
@@ -212,6 +221,26 @@ function [Y_hat_lambda_opt, B_lambda_opt, lambda_opt_universal, lambda_opt_list_
         % Reshaping B_lambda_opt_2 into the shape of the original image.
         B_lambda_opt = reshape(B_lambda_opt_2, siz(1), siz(2), siz(3), nx);
 
+        if warnings_on
+        
+            % A warning message is displayed if the regressor matrix 
+            % contains non-zero columns.
+            cols_with_all_zeros = all(regressor_matrix == 0);
+            cols_with_all_zeros_exist = sum(cols_with_all_zeros) > 0;
+
+            if cols_with_all_zeros_exist
+                msg = 'The columns in the design matrix must be non-negative.';
+                disp(msg)
+            end
+
+            % A warning message is displayed if the regressor matrix 
+            % contains linearly dependent columns.
+            if rank(regressor_matrix) < size(regressor_matrix, 2)
+                msg = 'The design matrix contains linearly dependent columns.';
+                disp(msg)
+            end     
+        end
+        
         Z = zscore(regressor_matrix);
 
         % Calculating an estimate of Y with the universal optimal value 

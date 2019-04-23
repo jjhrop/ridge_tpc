@@ -1,4 +1,4 @@
-function [b_lambda, b_lambda_opt, lambda_opt, sigma_b, cv_error_lambda] = ridge_tpc(y, X, lambda, K, cv_randomized, num_cores, b_lambda_opt_only, calculate_sigma)
+function [b_lambda, b_lambda_opt, lambda_opt, sigma_b, cv_error_lambda] = ridge_tpc(y, X, lambda, K, cv_randomized, num_cores, b_lambda_opt_only, calculate_sigma, warnings_on)
 
     % A function for estimating ridge regression coefficients.
     %
@@ -37,6 +37,8 @@ function [b_lambda, b_lambda_opt, lambda_opt, sigma_b, cv_error_lambda] = ridge_
     % Possible values: 0 and 1. By default, we proceed with the
     % calculation.
     %
+    % warnings_on: Whether warning messages are displayed. Default: 1.
+    %
     % Outputs:
     %
     % b_lambda: ridge regression coefficients with various values of parameter
@@ -51,9 +53,13 @@ function [b_lambda, b_lambda_opt, lambda_opt, sigma_b, cv_error_lambda] = ridge_
     %
     % cv_error_lambda: the cross-validation error for each value of lambda
     % 
-    % version 4.1, 2018-04-14; Jonatan Ropponen, Tomi Karjalainen
+    % version 4.2, 2018-04-23; Jonatan Ropponen, Tomi Karjalainen
     
     % Default values
+    
+    if nargin < 9
+        warnings_on = 1;
+    end
     
     if nargin < 3
         lambda = [0 1 10 100 1000 10^4 10^5 10^6];
@@ -65,8 +71,11 @@ function [b_lambda, b_lambda_opt, lambda_opt, sigma_b, cv_error_lambda] = ridge_
     for i = 1:n_lambda
         if lambda(i) < 0
             lambda(i) = 0;
-            msg = 'Lambda must be non-negative.';
-            disp(msg);
+            
+            if warnings_on
+                msg = 'Lambda must be non-negative.';
+                disp(msg);
+            end
         end
     end
     
@@ -90,10 +99,30 @@ function [b_lambda, b_lambda_opt, lambda_opt, sigma_b, cv_error_lambda] = ridge_
     if nargin < 8
         calculate_sigma = 1;
     end
-    
+
     % First centering y.
     ymean = mean(y);
     y_centered = y - ymean;
+    
+    if warnings_on
+
+        % A warning message is displayed if the regressor matrix contains 
+        % non-zero columns.
+        cols_with_all_zeros = all(X == 0);
+        cols_with_all_zeros_exist = sum(cols_with_all_zeros) > 0;
+
+        if cols_with_all_zeros_exist
+            msg = 'The columns in the design matrix must be non-negative.';
+            disp(msg)          
+        end
+
+        % A warning message is displayed if the regressor matrix contains
+        % linearly dependent columns.
+        if rank(X) < size(X, 2)
+            msg = 'The design matrix contains linearly dependent columns.';
+            disp(msg)
+        end    
+    end
 
     % Standardizing the design matrix.
     Z = zscore(X);
