@@ -106,7 +106,7 @@ function [Y_hat_lambda_opt, B_lambda_opt, lambda_opt_universal, lambda_opt_list_
             
             if warnings_on
                 msg = 'Lambda must be non-negative.';
-                disp(msg);
+                disp(msg)
             end
         end
     end
