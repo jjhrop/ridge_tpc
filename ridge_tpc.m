@@ -74,7 +74,7 @@ function [b_lambda, b_lambda_opt, lambda_opt, sigma_b, cv_error_lambda] = ridge_
             
             if warnings_on
                 msg = 'Lambda must be non-negative.';
-                disp(msg);
+                disp(msg)
             end
         end
     end
