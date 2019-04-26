@@ -104,7 +104,7 @@ function [b_lambda, b_lambda_opt, lambda_opt, sigma_b, cv_error_lambda] = ridge_
     ymean = mean(y);
     y_centered = y - ymean;
     
-    % An error is thrown the regressor matrix contains non-zero columns.
+    % An error is thrown if the regressor matrix contains non-zero columns.
     cols_with_all_zeros = all(X == 0);
     cols_with_all_zeros_exist = sum(cols_with_all_zeros) > 0;
 
