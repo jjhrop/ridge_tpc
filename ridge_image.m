@@ -83,7 +83,8 @@ function [Y_hat_lambda_opt, B_lambda_opt, lambda_opt_universal, lambda_opt_list_
     % K = 2;
     % cv_randomized = 1;
     % num_cores = 1;
-    % [Y_hat_lambda_opt, B_lambda_opt, lambda_opt_universal, lambda_opt_list_sample, sample_indices] = ridge_image(image_file_path, regressor_matrix, lambda, mask_file_path, lambda_opt_only, sample_fraction, K, cv_randomized, num_cores);
+    % warnings_on = 1;
+    % [Y_hat_lambda_opt, B_lambda_opt, lambda_opt_universal, lambda_opt_list_sample, sample_indices] = ridge_image(image_file_path, regressor_matrix, lambda, mask_file_path, lambda_opt_only, sample_fraction, K, cv_randomized, num_cores, warnings_on);
 
     
     % Default values
