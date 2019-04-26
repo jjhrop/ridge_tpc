@@ -221,7 +221,7 @@ function [Y_hat_lambda_opt, B_lambda_opt, lambda_opt_universal, lambda_opt_list_
         % Reshaping B_lambda_opt_2 into the shape of the original image.
         B_lambda_opt = reshape(B_lambda_opt_2, siz(1), siz(2), siz(3), nx);
 
-        % An error is thrown the regressor matrix contains non-zero columns.
+        % An error is thrown if the regressor matrix contains non-zero columns.
         cols_with_all_zeros = all(regressor_matrix == 0);
         cols_with_all_zeros_exist = sum(cols_with_all_zeros) > 0;
 
