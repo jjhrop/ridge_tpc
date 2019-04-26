@@ -53,7 +53,7 @@ function [b_lambda, b_lambda_opt, lambda_opt, sigma_b, cv_error_lambda] = ridge_
     %
     % cv_error_lambda: the cross-validation error for each value of lambda
     % 
-    % version 4.2, 2018-04-23; Jonatan Ropponen, Tomi Karjalainen
+    % version 4.3, 2018-04-26; Jonatan Ropponen, Tomi Karjalainen
     
     % Default values
     
@@ -104,17 +104,16 @@ function [b_lambda, b_lambda_opt, lambda_opt, sigma_b, cv_error_lambda] = ridge_
     ymean = mean(y);
     y_centered = y - ymean;
     
+    % An error is thrown the regressor matrix contains non-zero columns.
+    cols_with_all_zeros = all(X == 0);
+    cols_with_all_zeros_exist = sum(cols_with_all_zeros) > 0;
+
+    if cols_with_all_zeros_exist
+        msg = 'The columns in the design matrix must be non-negative.';
+        error(msg)          
+    end
+    
     if warnings_on
-
-        % A warning message is displayed if the regressor matrix contains 
-        % non-zero columns.
-        cols_with_all_zeros = all(X == 0);
-        cols_with_all_zeros_exist = sum(cols_with_all_zeros) > 0;
-
-        if cols_with_all_zeros_exist
-            msg = 'The columns in the design matrix must be non-negative.';
-            disp(msg)          
-        end
 
         % A warning message is displayed if the regressor matrix contains
         % linearly dependent columns.

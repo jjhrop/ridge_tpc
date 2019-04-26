@@ -69,7 +69,7 @@ function [Y_hat_lambda_opt, B_lambda_opt, lambda_opt_universal, lambda_opt_list_
     % coordinate corresponds to voxels and the second to the values of
     % lambda.
     %
-    % version 2.2, 2019-04-23, Jonatan Ropponen
+    % version 2.3, 2019-04-26, Jonatan Ropponen
 
     % example script
     %
@@ -221,17 +221,16 @@ function [Y_hat_lambda_opt, B_lambda_opt, lambda_opt_universal, lambda_opt_list_
         % Reshaping B_lambda_opt_2 into the shape of the original image.
         B_lambda_opt = reshape(B_lambda_opt_2, siz(1), siz(2), siz(3), nx);
 
-        if warnings_on
-        
-            % A warning message is displayed if the regressor matrix 
-            % contains non-zero columns.
-            cols_with_all_zeros = all(regressor_matrix == 0);
-            cols_with_all_zeros_exist = sum(cols_with_all_zeros) > 0;
+        % An error is thrown the regressor matrix contains non-zero columns.
+        cols_with_all_zeros = all(regressor_matrix == 0);
+        cols_with_all_zeros_exist = sum(cols_with_all_zeros) > 0;
 
-            if cols_with_all_zeros_exist
-                msg = 'The columns in the design matrix must be non-negative.';
-                disp(msg)
-            end
+        if cols_with_all_zeros_exist
+            msg = 'The columns in the design matrix must be non-negative.';
+            error(msg)
+        end
+        
+        if warnings_on
 
             % A warning message is displayed if the regressor matrix 
             % contains linearly dependent columns.
