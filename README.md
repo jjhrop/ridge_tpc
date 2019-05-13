@@ -5,8 +5,8 @@ The contents of this repository provide Matlab functions for analyzing signal in
 
 The code has been developed at the Human Emotion Systems Laboratory at the University of Turku and Turku PET Centre.
 
-Author: Jonatan Ropponen
-Contributions by Tomi Karjalainen
+Author: Jonatan Ropponen,
+contributions by Tomi Karjalainen
 
 13 May 2019
 
